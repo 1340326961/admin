@@ -1,22 +1,18 @@
 <template>
   <div>
-    <button @click="downLoad()">文件下载</button>
+    <xie-zi @onComplete="getdata"></xie-zi>
   </div>
 </template>
 
 <script>
+import xieZi from '@/components/xiezi.vue'
 export default {
+  components: {
+    xieZi
+  },
   methods: {
-    downLoad() {
-      this.$axios({
-        method:"get",
-        url:`http://192.168.4.3:59856/petroleum/downFiles?projectId=1`,
-        responseType:`arraybuffer`
-      }).then(res => {
-        let blob = new Blob([res.data])
-        let objectUrl = URL.createObjectURL(blob);
-        window.location.href = objectUrl;
-      })
+    getdata(val) {
+      console.log(val)
     }
   }
 }

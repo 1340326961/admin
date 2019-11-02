@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+	<head lang="en">
+    <title>手工抄写</title>
+    <meta name="viewport" charset="UTF-8" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	</head>
+	<body onload="init()">
+	<script type="text/javascript" src="./js/EPaper.min.js"></script>
+	<script>
+	    var myepaper;
+	    var tag1=0;
+	    var tag2=0;
+	    var size=[1,2,4,5,3];
+	    var color=["red","blue","green","rgb(100,200,223)","black"];
+		var boldStuffText = "本人已阅读保险条款、产品说明书和投保提示书，了解本产品的特点和保单利益的不确定性愿意承担相关风险。";
+		var iWriting = 0;
+		var iPenSize=10;
+		var imgHeight=50;
+		var imgWidth=50;
+		var endImage;
+		function setCurrentWriting(i) {
+	    	var strC = boldStuffText.substring(i,i+1);
+			var strF = boldStuffText.substring(0,i);
+			var strB = boldStuffText.substring(i+1);
+			document.getElementById('boldStuff').innerHTML = strF+"<span style=\"color:red; size:50\">"+strC+"</span>"+strB;
+		}
+		function gotoB() {
+		if(iWriting==boldStuffText.length)
+		{
+			return;
+		}
+				
+			iWriting++;
+			getPng();
+			clearCanvas();
+			setCurrentWriting(iWriting);
+		}
+		function gotoF() {
+		if(iWriting==0)
+				return;
+			iWriting--;
+			clearCanvas();
+			setCurrentWriting(iWriting);
+		}
+	    function init() {
+			myepaper = new EPaper("tt");
+			myepaper.setPenSize(iPenSize);
+			setCurrentWriting(iWriting);
+			var strtmp = "";
+			for(i=0;i<boldStuffText.length;i++)
+			{
+				strtmp=strtmp+"<img style=\"width:"+imgWidth+"px;height:"+imgHeight+"px;\" id=\"img"+(i+1)+"\"/>";
+			}
+			document.getElementById('boldStuffImg').innerHTML =strtmp;
+		//	createImageWithCanvas();
+		}
+		
+		function createImageWithCanvas(){		
+			var CanvasWidth = 400; //画布宽度
+			var MaxStrOfLine = 400/imgWidth;  //一行显示的最大字数
+			var CanvasHeigth = Math.ceil((boldStuffText.length) / MaxStrOfLine) * imgHeight;  //画布宽度
+			document.getElementById('boldStuffCanvas').innerHTML = "<canvas id=\"boldtt\" width=\""+CanvasWidth+"px\" height=\""+CanvasHeigth+"px\"></canvas>";
+			var canvas = document.getElementById("boldtt");
+			var CurrentLine = 0;
+			var imgx=0;
+			var imgy=0;
+			for(i=1;i<=boldStuffText.length;i++)
+			{
+				//计算应该摆放的位置
+				CurrentLine = Math.ceil((i) / MaxStrOfLine);
+				imgy = CurrentLine * imgHeight-imgHeight;
+				imgx = (i-MaxStrOfLine * CurrentLine+8) * imgWidth-imgWidth;
+				var img = document.getElementById('img'+(i));
+				var pngUrl = img.src;
+				//提取图片，放到一个临时画板里
+				var imagetmp = new Image();
+				var canvastmp = document.createElement("canvas");
+				imagetmp.width = canvas.width;
+				imagetmp.height = canvas.height;
+				imagetmp.src = pngUrl;
+				canvastmp.width = canvas.width;
+				canvastmp.height = canvas.height;
+				var context =canvastmp.getContext("2d"); 
+				
+				//画板缩放并提取image
+				context.scale(imgWidth/350, imgHeight/350);
+				context.drawImage(imagetmp,0,0);
+				imagetmp.src = canvastmp.toDataURL("image/png");
+
+				var CanvasWidth = 400; //画布宽度
+				var MaxStrOfLine = 400/imgWidth;  //一行显示的最大字数
+				var canvastt = document.getElementById("boldtt");
+				CurrentLine = Math.ceil((i) / MaxStrOfLine);
+				imgy = CurrentLine * imgHeight-imgHeight;
+				imgx = (i-MaxStrOfLine * CurrentLine+8) * imgWidth-imgWidth;
+				canvastt.getContext("2d").drawImage(imagetmp, imgx, imgy);
+				endImage = canvastt.toDataURL("image/png");
+				document.getElementById('endImage').value=endImage;
+			}
+		}
+		
+	    function getSize(){
+	    	var jsonString=myepaper.getHandWritingJson();
+	    	var json=JSON.parse(jsonString);
+	    	var point=0;
+	    	for (var i=0;i<json.strokes.length;i++){
+	    		point+=json.strokes[i].points.length;
+	    	}
+	    	document.getElementById("count1").innerHTML = point;
+	    	document.getElementById("count2").innerHTML = jsonString.length;
+	    	document.getElementById("count3").innerHTML = jsonString.length/1024+"KB";
+	    }
+	    function getJSON(){
+	    	var json=myepaper.getHandWritingJson();
+	    	alert(json);
+	    }
+	    function undo(){
+	    	myepaper.undo();
+	    }
+	    function redo(){
+	    	myepaper.redo();
+	    }
+	    function clearCanvas(){
+	    	myepaper.clear();
+	    }
+	    function replay(){
+	   		myepaper.replay();
+	    }
+	    function setSize(){
+	    	myepaper.setPenSize(size[tag1]);
+	    	tag1=(tag1+1)%5;
+	    }
+	    function setColor(){
+	    	myepaper.setPenColor(color[tag2]);
+	    	tag2=(tag2+1)%5;
+	    }
+	    function getPng(){
+	    	//var pngUrl=myepaper.getHandWritingPng(350,350);
+			var canvas = document.getElementById("tt");
+			
+			pngUrl = canvas.toDataURL("image/png");
+	    	if(pngUrl != null)
+			{
+				//首先，正常显示
+				var img = document.getElementById("img"+iWriting);
+				img.src= pngUrl;
+			/*	//提取图片，放到一个临时画板里
+				var imagetmp = new Image();
+				var canvastmp = document.createElement("canvas");
+				imagetmp.width = canvas.width;
+				imagetmp.height = canvas.height;
+				imagetmp.src = pngUrl;
+				canvastmp.width = canvas.width;
+				canvastmp.height = canvas.height;
+				var context =canvastmp.getContext("2d"); 
+				
+				//画板缩放并提取image
+				context.scale(imgWidth/350, imgHeight/350);
+				context.drawImage(imagetmp,0,0);
+				imagetmp.src = canvastmp.toDataURL("image/png");
+				
+				var CurrentLine = 0;
+				var imgx=0;
+				var imgy=0;
+				var CanvasWidth = 400; //画布宽度
+				var MaxStrOfLine = 400/imgWidth;  //一行显示的最大字数
+				var canvastt = document.getElementById("boldtt");
+				CurrentLine = Math.ceil((iWriting) / MaxStrOfLine);
+				imgy = CurrentLine * imgHeight-imgHeight;
+				imgx = (iWriting-MaxStrOfLine * CurrentLine+8) * imgWidth-imgWidth;
+				canvastt.getContext("2d").drawImage(imagetmp, imgx, imgy);*/
+			}
+	    }
+	    function playWithJ(){
+	    	var json=document.getElementById("jj").value;
+	    	myepaper.playWithJson(json);
+	    }
+    </script>
+    <style>
+
+    	font{
+    		font-size: 10px;
+    	}
+    	canvas{
+    		background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAADnC86AAAACXBIWXMAAAsTAAALEwEAmpwYAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAAETklEQVR42nSXyVbsMBBDPVQS4P//Ew4bSNtx3kJ5F+E0XvRJJx5qkFTl/PHxkVJKKeWcc856Ps/zPM8xhh5qraWUUkpKiZcppVprzrmUwkKt3fdd89lE+6/rylmh7fRNz6zXSh2WbHCwBl91jPaRTZyqN/iTUgoZq9/eu+Zho96X/wN7mYYFPJ/nuSwLb2qt7L/vOzuHnySjZJFiqDHG0F+9x8XWmqcJH3LOx3FoGq4fx3Ech1yvteb39/dlWXLOuDttNAXZ/67r2ntvrSkv2rGU8ng8mDz94sBPjgngdEDOubXmGcGmfd+VCAyVZ/cdJvSd5xkKCzOmbBFeft2y3rtyoU+kwGcCezmGZXGeZ++dZPjx/IoG5++RUooI7U6aFHAAqPMwTiAXWeIeQA+IFqc/BmB0SJ7n6SHEUfaRKZFzRgf0WVN9CCy+ktjqWZiSBb13Hew4x1DeBz5hcq3V5Qm/3XtHA0DV2ezDwTgALccY0XuXIWMMuc43Yi5BuNPJw0gigZIeNEFDYJStAZc0VRki/lqw77veRITeowaoJmLp+PKsjzEAY8458HKi+ZWJiIn4OgA6TZiQ9yiU74PkwYggVmIFckr0sBT0aoJigwTda8lU31zkAzTeRd/hxhusvMvqhF6vrcK53muE9qL8eX0FFCSCmVeeLBJ6mNaWUtZ1VZCVlx86wTmnAfh0XjlJXJgmZChByoJTnNRcHlMyQR0iOima1G7qUu56J1rSfogRGETYwrertR7H0XsXyrB3XdepNVAkhV4OBlzyb4zRWlNl27Zt27aIK8BjjPz5+YlDOvg4Dg/jJNeTOMjEUsqyLOIFRt+Va9s2QBP3mkOCiZ5rLwd7bDFR9EWCnGmKEPNjqr4OS8kNIHCV0MPr66uj/alYEicZBH0CWJZSvr+/pYvASkfCP6SRVD1NBFqLQQjIDxVZ7GQlkpotgNBxyiAvD/n3oFw67lx3LwFByhU61wTvq+/tX2uNTvQuYZAT7/8sEp4SF4qXl5e7pqpITMrlmJhYABSuDkQ0QHpIjIbYRT2emre3t7fJS0evi4GGutIf5fKOp/dOjltrIkZrTYiTixFXTXvabNw7c/dV/rTWQsfQsE0XC1daBzDhmbpxaq1fvVzPwWyQfFUPv2xBA6LnaJBZ92uc09evWxN0wm9wtAqPx8OroaqNYqBnLfGy6IPOZIo57ezV3l4aFjFdApxUwMTFwUvs5NnTO60LbfBKrsCQ6073u38mZ1pMvz1RXDn2SExd6YVql35xgPyRCL+DIEBU+6c9kFdSVG+ux+BFdLpjis4Xs1TmniqawkYJYODuGCOWZSEgX19fEbGuK6hR/JXOWqsaKKzWWu/aUBhXIUCuAnVBauqqdAYNMISmMDuOtItHRRmBmd6YTo1UOF6IuZcXidT98i5pY/JUs4nthC8gFl5YPA2wVnXaa8YUw4uX/+8K96pKT0Enk1L6NwB496XI9pIofQAAAABJRU5ErkJggg==");
+    	}
+    	div{
+    		margin-left: 10px;
+    	}
+    	body{
+    		background-color: white;
+    		line-height: 20px;
+    	}
+    	button{
+    		margin-top: 5px;
+    	}
+    </style>
+	抄写提示：
+	<div id="boldStuff">
+	</div>
+	
+	<div>
+	<button onclick="gotoF()">上一字</button>
+	<button onclick="gotoB()">下一字</button>
+	</div>
+    <canvas id="tt" width="350px" height="350px"></canvas>
+    <div>
+   		<button onclick="undo()">撤销</button>
+   		<button onclick="redo()">恢复</button>
+   		<button onclick="clearCanvas()">清除</button>
+   		<button onclick="replay()">回放</button>
+   		<button onclick="setSize()">笔画粗细</button>
+   		<button onclick="setColor()">笔画颜色</button>
+		<button onclick="createImageWithCanvas()">提交</button>
+		<button onclick="getJSON()">查看签名数据</button>
+<!--   	
+	<button onclick="getPng()">获取图片</button>
+   		
+   		<button onclick="getSize()">查看签名数据大小</button>
+-->
+    </div>
+	<div id="boldStuffImg">
+	</div>
+	<div id="boldStuffCanvas">
+	</div>
+	<div>
+	<textarea id=endImage></textarea>
+	</div>
+<!--
+    <div>
+	    <font>点个数：</font><font id="count1"></font><br />
+	    <font>字符个数：</font><font id="count2"></font><br />
+	    <font>字节大小：</font><font id="count3"></font><br />
+	    <font>签名数据：</font><font id="data"></font>
+	</div>
+	<input id="jj"></input>
+	<button onclick="playWithJ()">重放JSON数据</button>
+	-->
+	</body>
+</html>
