@@ -12,23 +12,19 @@ const routes = [
     name: 'home',
     component: Home,
     children:[{
-      path: '/cache',
-      name: 'cache',
-      component: () => import('../views/cache/cache.vue'),
-      meta: { 
-        keepAlive: true 
-      }
-    },{
       path: '/page2',
       name: 'page2',
-      component: () => import('../views/page2/page2.vue'),
+      component: () => import('@/views/page2/page2.vue'),
       meta: { 
         keepAlive: true 
       }
     },{
-      path: '/wxdownload',
-      name: 'wxdownload',
-      component: () => import('../views/wxdownload/wxdownload.vue'),
+      path: '/page1',
+      name: 'page1',
+      component: () => import('@/views/page1/page1.vue'),
+      meta: { 
+        keepAlive: true 
+      }
     }]
   },
   {
